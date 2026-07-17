@@ -1,4 +1,5 @@
 import { LocalStorage } from "@raycast/api";
+import { randomUUID } from "node:crypto";
 import type { ErrorCategory, HistoryEntry, RewriteMode } from "./types";
 
 const STORAGE_KEY = "tweetcraft.history.v1";
@@ -88,7 +89,7 @@ export async function beginHistoryAttempt(sourceText: string, mode: RewriteMode)
     };
   } else {
     current = {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       sourceText,
       normalizedSourceText,
       mode,
