@@ -4,7 +4,7 @@
   "title": "TweetCraft for Gemini",
   "description": "Rewrite Chinese ideas into natural English posts for X and copy them to the clipboard.",
   "icon": "icon.png",
-  "author": "your-raycast-username",
+  "author": "taaneo",
   "license": "MIT",
   "categories": [
     "Communication",
