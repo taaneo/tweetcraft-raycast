@@ -23,20 +23,14 @@ Reasons:
 
 The user's Terminal may inherit proxy environment variables while Raycast does not.
 
-Observed local proxy configuration included values similar to:
-
-```text
-http_proxy=http://127.0.0.1:7897
-https_proxy=http://127.0.0.1:7897
-all_proxy=socks5://127.0.0.1:7897
-```
-
 Therefore Gemini networking must not depend solely on inherited shell environment variables.
 
 Consequences:
 
 - proxy settings should be explicit,
+- no author-specific proxy should be enabled by default,
 - setup diagnostics should distinguish proxy and network failures,
+- diagnostics must redact proxy credentials,
 - changes to the HTTP client must preserve proxy compatibility.
 
 ## D003 — Save the original text before calling Gemini
@@ -142,16 +136,24 @@ Repository:
 taaneo/tweetcraft-raycast
 ```
 
-Visibility:
-
-```text
-private
-```
-
 Current release tag:
 
 ```text
-v1.1.0
+v1.2.0
 ```
 
-Future work should be committed and versioned through Git rather than distributed primarily as replacement ZIP folders.
+The repository is intended to be public and submitted to the Raycast Store. Future work should be committed and versioned through Git rather than distributed primarily as replacement ZIP folders.
+
+## D011 — Store history as independent local records
+
+**Status:** Accepted
+
+The v1 history schema stored every record in one JSON array. Concurrent Raycast command instances could both read the same array and overwrite each other's changes.
+
+The v2 schema stores one record per `LocalStorage` key and migrates valid v1 records on first read. This makes unrelated writes independent while keeping the command-facing history API small.
+
+## D012 — Use US English for Store-facing UI
+
+**Status:** Accepted
+
+Raycast Store command metadata, HUD messages, actions, and history UI use US English. Chinese remains the expected source content, and a Chinese README is maintained for users who prefer it.

@@ -2,7 +2,7 @@
 
 This roadmap is directional. Preserve current behavior while shipping changes incrementally.
 
-## Current: v1.1.0
+## Current: v1.2.0 — Reliability and Store readiness
 
 Completed:
 
@@ -18,28 +18,17 @@ Completed:
 - 30-day cleanup
 - Five-minute deduplication
 - Successful retry updates the original record
+- Per-record v2 history storage with backward-compatible v1 migration
+- Automated tests for concurrency, cleanup, deduplication, retry updates, malformed records, and record limits
+- Credential-free proxy diagnostics and no machine-specific proxy default
+- US English Store-facing UI and bilingual documentation
+- Public privacy disclosure for Gemini API data handling
 
-## v1.2 — Reliability and recovery
+Before Store submission:
 
-Goal: make failure states predictable and easy to recover from.
-
-Candidate work:
-
-- Improve history schema versioning and migration.
-- Add clearer retry status and progress feedback.
-- Add tests for cleanup, deduplication, retry updates, and record limits.
-- Improve timeout handling.
-- Make proxy diagnostics more actionable.
-- Add safe handling for malformed Gemini responses.
-- Ensure concurrent submissions cannot corrupt local history.
-- Review whether retry should preserve the original style mode automatically.
-
-Exit criteria:
-
-- recovery behavior has automated tests,
-- no duplicate record is created during a successful retry,
-- all failure paths retain the original Chinese text,
-- build passes.
+- Capture at least three Raycast Store screenshots with Window Capture.
+- Make the GitHub repository public.
+- Run the final `npm run publish` flow and address reviewer feedback.
 
 ## v1.3 — Prompt quality
 

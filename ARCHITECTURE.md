@@ -1,6 +1,6 @@
 # Architecture
 
-This document describes the repository as of `v1.1.0`.
+This document describes the repository as of `v1.2.0`.
 
 The code is a Raycast extension written in TypeScript. Commands share a common rewrite pipeline and Gemini client.
 
@@ -81,6 +81,10 @@ Responsibilities may include:
 
 Do not store the API key or include it in thrown error messages.
 
+### `src/proxy.ts`
+
+Normalizes explicit HTTP/HTTPS proxy preferences and produces a credential-free route label for diagnostics. Connection code receives the complete proxy URL; UI and history receive only the redacted label or a generic connection failure.
+
 ## Prompt system
 
 ### `src/prompts.ts`
@@ -95,7 +99,11 @@ Prompt changes should be evaluated as product changes, not treated as simple ref
 
 ### `src/history.ts`
 
-Owns local draft persistence.
+Adapts Raycast `LocalStorage` to the history repository and preserves the command-facing API.
+
+### `src/history-repository.ts`
+
+Owns local draft persistence and policy. Each record uses a separate v2 storage key so overlapping Raycast command instances cannot overwrite unrelated drafts. The legacy v1 array is migrated on first read and removed only after valid records are copied.
 
 Core policies:
 
@@ -107,7 +115,7 @@ Core policies:
 - update an existing record after retry,
 - never store the API key.
 
-Prefer keeping all retention and deduplication rules inside this module so commands cannot diverge.
+Keep all retention, validation, migration, and deduplication rules inside this module so commands cannot diverge.
 
 ## Types
 
@@ -123,7 +131,7 @@ Persisted types should be treated carefully because older local records may stil
 
 Defines extension metadata, commands, preferences, scripts, and dependencies.
 
-The manifest author may still be a placeholder. Raycast lint can reject that placeholder even when build/typecheck succeeds.
+The manifest contains the Raycast Store author handle and US English command metadata.
 
 ### `raycast-env.d.ts`
 
@@ -137,17 +145,15 @@ TypeScript configuration.
 
 Lint configuration.
 
-## Assets and installation
+## Assets
 
 ### `assets/icon.png`
 
 Extension icon.
 
-### `install.command`
+## Tests
 
-Local installation helper.
-
-Review shell scripts for portability and avoid embedding machine-specific paths or credentials.
+`tests/history-repository.test.ts` exercises concurrent writes, v1 migration, malformed records, retention, limits, deduplication, and retry-in-place behavior through the repository interface. `tests/proxy.test.ts` prevents proxy credentials from entering diagnostics.
 
 ## Data flow
 

@@ -2,13 +2,13 @@ import { showHUD } from "@raycast/api";
 import { checkConnection, humanizeError } from "./gemini";
 
 export default async function Command() {
-  await showHUD("🧪 正在检查 Gemini 连接…");
+  await showHUD("🧪 Checking the Gemini connection…");
 
   try {
     const result = await checkConnection();
-    await showHUD(`✅ Gemini 正常｜${result.model}｜${result.route}`);
+    await showHUD(`✅ Gemini connected | ${result.model} | ${result.route}`);
   } catch (error) {
-    console.error(error);
+    console.error("Gemini setup check failed");
     await showHUD(`❌ ${humanizeError(error)}`);
   }
 }

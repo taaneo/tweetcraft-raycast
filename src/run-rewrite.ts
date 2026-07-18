@@ -10,7 +10,7 @@ export async function runRewrite(
 ): Promise<void> {
   const input = props.arguments.text?.trim();
   if (!input) {
-    await showHUD("❌ 请输入中文内容");
+    await showHUD("❌ Enter some Chinese text");
     return;
   }
 
@@ -21,21 +21,21 @@ export async function runRewrite(
   } catch (error) {
     console.error("Failed to save local draft", error);
     await Clipboard.copy(input);
-    await showHUD("❌ 无法保存本地草稿，原中文已复制；未发送翻译请求");
+    await showHUD("❌ Draft could not be saved. The original was copied; nothing was sent to Gemini");
     return;
   }
 
   const profile = profiles[mode];
-  await showHUD(`✨ 已保存草稿，正在生成 ${profile.label} 英文…`);
+  await showHUD(`✨ Draft saved. Writing the ${profile.label.toLowerCase()} English version…`);
 
   try {
     const output = await rewriteText(input, mode);
     await markHistorySuccess(historyEntry.id, output);
     await Clipboard.copy(output);
     const count = Array.from(output).length;
-    await showHUD(`✅ 已复制 ${profile.label} 英文（${count} 字符）`);
+    await showHUD(`✅ ${profile.label} English copied (${count} characters)`);
   } catch (error) {
-    console.error(error);
+    console.error("Gemini rewrite failed", classifyError(error));
     const message = humanizeError(error);
 
     try {
@@ -45,6 +45,6 @@ export async function runRewrite(
     }
 
     await Clipboard.copy(input);
-    await showHUD(`❌ 翻译失败，原中文已复制：${message}`);
+    await showHUD(`❌ Rewrite failed. The original Chinese was copied: ${message}`);
   }
 }

@@ -47,13 +47,13 @@
     {
       "name": "networkMode",
       "title": "Network Mode",
-      "description": "Auto tries the local proxy first, then a direct connection only when the proxy cannot be reached.",
+      "description": "Auto uses the configured proxy when present and falls back to a direct connection if it cannot be reached.",
       "type": "dropdown",
       "required": true,
       "default": "auto",
       "data": [
         {
-          "title": "Auto — Proxy First, Then Direct",
+          "title": "Auto — Configured Proxy, Then Direct",
           "value": "auto"
         },
         {
@@ -69,10 +69,9 @@
     {
       "name": "proxyUrl",
       "title": "Proxy URL",
-      "description": "Your local HTTP proxy. The current setup uses port 7897.",
+      "description": "Optional HTTP or HTTPS proxy used explicitly by the extension.",
       "type": "textfield",
       "required": false,
-      "default": "http://127.0.0.1:7897",
       "placeholder": "http://127.0.0.1:7897"
     }
   ],
@@ -93,7 +92,7 @@
         {
           "name": "text",
           "type": "text",
-          "placeholder": "输入中文内容",
+          "placeholder": "Enter Chinese text",
           "required": true
         }
       ]
@@ -114,7 +113,7 @@
         {
           "name": "text",
           "type": "text",
-          "placeholder": "输入中文内容",
+          "placeholder": "Enter Chinese text",
           "required": true
         }
       ]
@@ -135,7 +134,7 @@
         {
           "name": "text",
           "type": "text",
-          "placeholder": "输入中文内容",
+          "placeholder": "Enter Chinese text",
           "required": true
         }
       ]
@@ -156,7 +155,7 @@
         {
           "name": "text",
           "type": "text",
-          "placeholder": "输入中文回复",
+          "placeholder": "Enter a Chinese reply",
           "required": true
         }
       ]
@@ -194,7 +193,8 @@
     "dev": "ray develop",
     "fix-lint": "ray lint --fix",
     "lint": "ray lint",
-    "publish": "npx @raycast/api@latest publish"
+    "publish": "npx @raycast/api@latest publish",
+    "test": "tsc -p tsconfig.tests.json && node --test .test-dist/tests/*.test.js"
   },
   "dependencies": {
     "@raycast/api": "^1.104.23",
@@ -209,5 +209,5 @@
     "prettier": "^3.5.3",
     "typescript": "^5.8.3"
   },
-  "version": "1.1.0"
+  "version": "1.2.0"
 }

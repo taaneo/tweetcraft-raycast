@@ -23,7 +23,7 @@ TweetCraft is not intended to be a literal translation tool. It should preserve 
 
 ## Current release
 
-`v1.1.0`
+`v1.2.0`
 
 The current implementation includes:
 
@@ -38,17 +38,19 @@ The current implementation includes:
 - Error classification
 - Clipboard-first output
 - Proxy-aware Gemini requests
+- Per-record local history storage with automatic v1 migration
+- Automated history policy and proxy-redaction tests
 
 ## Raycast command aliases
 
 Recommended aliases:
 
-| Alias | Command |
-|---|---|
-| `tp` | Natural |
-| `tpx` | Punchy |
-| `tps` | Short |
-| `tpr` | Reply |
+| Alias | Command                  |
+| ----- | ------------------------ |
+| `tp`  | Natural                  |
+| `tpx` | Punchy                   |
+| `tps` | Short                    |
+| `tpr` | Reply                    |
 | `tph` | Recent TweetCraft Drafts |
 
 Existing aliases are part of the product interface and should not be broken without an explicit migration plan.
@@ -103,6 +105,8 @@ http://127.0.0.1:7897
 
 Raycast does not necessarily inherit the same proxy environment as Terminal. Proxy handling must therefore remain explicit and testable inside the extension.
 
+No proxy is configured by default. Auto mode connects directly unless the user explicitly provides a proxy URL.
+
 ## Repository structure
 
 The implementation lives primarily under `src/`. See `ARCHITECTURE.md` for a module-level overview.
@@ -115,5 +119,6 @@ A change is complete when:
 - existing aliases still work,
 - no API key or private draft is exposed,
 - failure behavior is safe,
+- `npm test` passes,
 - `npm run build` passes,
 - lint/type errors introduced by the change are resolved or explicitly documented.

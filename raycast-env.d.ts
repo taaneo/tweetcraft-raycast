@@ -12,10 +12,10 @@ type ExtensionPreferences = {
   "apiKey": string,
   /** Gemini Model - The Gemini model used for rewriting. */
   "model": "gemini-3.5-flash" | "gemini-3.1-flash-lite" | "gemini-2.5-flash",
-  /** Network Mode - Auto tries the local proxy first, then a direct connection only when the proxy cannot be reached. */
+  /** Network Mode - Auto uses the configured proxy when present and falls back to a direct connection if it cannot be reached. */
   "networkMode": "auto" | "proxy" | "direct",
-  /** Proxy URL - Your local HTTP proxy. The current setup uses port 7897. */
-  "proxyUrl": string
+  /** Proxy URL - Optional HTTP or HTTPS proxy used explicitly by the extension. */
+  "proxyUrl"?: string
 }
 
 /** Preferences accessible in all the extension's commands */
@@ -39,22 +39,22 @@ declare namespace Preferences {
 declare namespace Arguments {
   /** Arguments passed to the `natural` command */
   export type Natural = {
-  /** 输入中文内容 */
+  /** Enter Chinese text */
   "text": string
 }
   /** Arguments passed to the `punchy` command */
   export type Punchy = {
-  /** 输入中文内容 */
+  /** Enter Chinese text */
   "text": string
 }
   /** Arguments passed to the `short` command */
   export type Short = {
-  /** 输入中文内容 */
+  /** Enter Chinese text */
   "text": string
 }
   /** Arguments passed to the `reply` command */
   export type Reply = {
-  /** 输入中文回复 */
+  /** Enter a Chinese reply */
   "text": string
 }
   /** Arguments passed to the `check-setup` command */

@@ -1,6 +1,7 @@
 import { Agent, Dispatcher, ProxyAgent, request } from "undici";
 import { getPreferenceValues } from "@raycast/api";
 import { profiles, shorteningPrompt } from "./prompts";
+import { formatProxyRoute, normalizeProxyUrl } from "./proxy";
 import type { ErrorCategory, GeminiResponse, Preferences, RewriteMode } from "./types";
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta";
@@ -138,22 +139,6 @@ async function postGenerateContent(options: {
   }
 }
 
-function normalizeProxyUrl(proxyUrl?: string): string | undefined {
-  const trimmed = proxyUrl?.trim();
-  if (!trimmed) return undefined;
-
-  try {
-    const parsed = new URL(trimmed);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      throw new Error("Only HTTP and HTTPS proxy URLs are supported");
-    }
-    return parsed.toString();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new GeminiRequestError(`Invalid proxy URL: ${message}`);
-  }
-}
-
 type NetworkResult = {
   text: string;
   route: string;
@@ -167,7 +152,12 @@ async function generateWithNetworkFallback(options: {
   networkMode: Preferences["networkMode"];
   proxyUrl?: string;
 }): Promise<NetworkResult> {
-  const proxyUrl = normalizeProxyUrl(options.proxyUrl);
+  let proxyUrl: string | undefined;
+  try {
+    proxyUrl = normalizeProxyUrl(options.proxyUrl);
+  } catch (error) {
+    throw new GeminiRequestError(error instanceof Error ? error.message : "Invalid proxy URL");
+  }
 
   if (options.networkMode === "direct") {
     return {
@@ -180,7 +170,7 @@ async function generateWithNetworkFallback(options: {
     if (!proxyUrl) throw new GeminiRequestError("Proxy Only is selected, but no proxy URL is configured");
     return {
       text: await postGenerateContent({ ...options, proxyUrl }),
-      route: proxyUrl,
+      route: formatProxyRoute(proxyUrl),
     };
   }
 
@@ -188,7 +178,7 @@ async function generateWithNetworkFallback(options: {
     try {
       return {
         text: await postGenerateContent({ ...options, proxyUrl }),
-        route: `${proxyUrl} (auto)`,
+        route: `${formatProxyRoute(proxyUrl)} (auto)`,
       };
     } catch (error) {
       if (!(error instanceof GeminiRequestError) || !error.connectionFailure) {
@@ -288,14 +278,14 @@ export function classifyError(error: unknown): ErrorCategory {
 
 export function errorCategoryLabel(category: ErrorCategory): string {
   const labels: Record<ErrorCategory, string> = {
-    timeout: "请求超时",
-    proxy: "代理错误",
-    network: "网络错误",
-    quota: "配额或频率限制",
-    api_key: "API Key 或权限错误",
-    model: "模型不可用",
-    request: "请求错误",
-    unknown: "未知错误",
+    timeout: "Request timed out",
+    proxy: "Proxy error",
+    network: "Network error",
+    quota: "Quota or rate limit",
+    api_key: "API key or permission error",
+    model: "Model unavailable",
+    request: "Request error",
+    unknown: "Unknown error",
   };
   return labels[category];
 }
@@ -306,19 +296,19 @@ export function humanizeError(error: unknown): string {
 
   switch (category) {
     case "api_key":
-      return "Gemini 拒绝了 API Key，或项目权限不足";
+      return "Gemini rejected the API key or the project lacks permission";
     case "quota":
-      return "Gemini API 配额已用尽或触发频率限制";
+      return "The Gemini API quota is exhausted or rate-limited";
     case "model":
-      return `所选 Gemini 模型不可用：${message}`;
+      return `The selected Gemini model is unavailable: ${message}`;
     case "timeout":
-      return "Gemini 请求超时";
+      return "The Gemini request timed out";
     case "proxy":
-      return `代理连接失败：${message}`;
+      return "Could not connect through the configured proxy";
     case "network":
-      return `网络连接失败：${message}`;
+      return "Could not connect to the Gemini API";
     case "request":
-      return `Gemini 请求被拒绝：${message}`;
+      return `Gemini rejected the request: ${message}`;
     default:
       return message;
   }

@@ -25,7 +25,7 @@ import { profiles } from "./prompts";
 import type { HistoryEntry } from "./types";
 
 function formatTime(timestamp: number): string {
-  return new Intl.DateTimeFormat("zh-CN", {
+  return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     hour: "2-digit",
@@ -34,9 +34,11 @@ function formatTime(timestamp: number): string {
 }
 
 function statusText(entry: HistoryEntry): string {
-  if (entry.status === "success") return "翻译成功";
-  if (entry.status === "pending") return "处理中，或上次处理中断";
-  return entry.errorCategory ? `翻译失败 · ${errorCategoryLabel(entry.errorCategory)}` : "翻译失败";
+  if (entry.status === "success") return "Rewrite succeeded";
+  if (entry.status === "pending") return "Processing, or the previous attempt was interrupted";
+  return entry.errorCategory
+    ? `Rewrite failed · ${errorCategoryLabel(entry.errorCategory)}`
+    : "Rewrite failed";
 }
 
 function statusIcon(entry: HistoryEntry): { source: Icon; tintColor: Color } {
@@ -70,16 +72,16 @@ function escapeMarkdown(text: string): string {
 }
 
 function detailMarkdown(entry: HistoryEntry): string {
-  const sections = [`## 中文原文\n\n${escapeMarkdown(entry.sourceText)}`];
+  const sections = [`## Original Chinese\n\n${escapeMarkdown(entry.sourceText)}`];
 
   if (entry.outputText) {
     sections.push(
-      `## ${entry.status === "success" ? "英文结果" : "上次成功的英文结果"}\n\n${escapeMarkdown(entry.outputText)}`,
+      `## ${entry.status === "success" ? "English Result" : "Previous Successful Result"}\n\n${escapeMarkdown(entry.outputText)}`,
     );
   }
 
   if (entry.errorMessage) {
-    sections.push(`## 最近错误\n\n${escapeMarkdown(entry.errorMessage)}`);
+    sections.push(`## Latest Error\n\n${escapeMarkdown(entry.errorMessage)}`);
   }
 
   return sections.join("\n\n---\n\n");
@@ -98,13 +100,14 @@ export default function Command() {
     reload()
       .catch((error) => {
         console.error(error);
-        showToast({ style: Toast.Style.Failure, title: "无法读取本地历史" });
+        showToast({ style: Toast.Style.Failure, title: "Could not read local history" });
       })
       .finally(() => setIsLoading(false));
   }, []);
 
   const subtitle = useMemo(
-    () => `本机保存 · 最多 ${historyPolicy.maxEntries} 条 · ${historyPolicy.retentionDays} 天自动清理`,
+    () =>
+      `Stored locally · Up to ${historyPolicy.maxEntries} drafts · Removed after ${historyPolicy.retentionDays} days`,
     [],
   );
 
@@ -115,7 +118,7 @@ export default function Command() {
 
   async function retry(entry: HistoryEntry) {
     setBusyId(entry.id);
-    const toast = await showToast({ style: Toast.Style.Animated, title: "正在重新翻译…" });
+    const toast = await showToast({ style: Toast.Style.Animated, title: "Rewriting…" });
 
     try {
       const pending = await beginRetry(entry);
@@ -127,9 +130,9 @@ export default function Command() {
       await reload();
 
       toast.style = Toast.Style.Success;
-      toast.title = "重新翻译成功，英文已复制";
+      toast.title = "Rewrite succeeded and English was copied";
     } catch (error) {
-      console.error(error);
+      console.error("Gemini retry failed", classifyError(error));
       const message = humanizeError(error);
 
       try {
@@ -142,7 +145,7 @@ export default function Command() {
       await reload();
 
       toast.style = Toast.Style.Failure;
-      toast.title = "重新翻译失败，原中文已复制";
+      toast.title = "Rewrite failed and the original Chinese was copied";
       toast.message = message;
     } finally {
       setBusyId(undefined);
@@ -151,9 +154,9 @@ export default function Command() {
 
   async function remove(entry: HistoryEntry) {
     const confirmed = await confirmAlert({
-      title: "删除这条记录？",
-      message: "中文原文和英文结果都会从本机历史中删除。",
-      primaryAction: { title: "删除", style: Alert.ActionStyle.Destructive },
+      title: "Delete this draft?",
+      message: "The original Chinese and English result will be removed from local history.",
+      primaryAction: { title: "Delete", style: Alert.ActionStyle.Destructive },
     });
     if (!confirmed) return;
 
@@ -163,23 +166,27 @@ export default function Command() {
 
   async function removeAll() {
     const confirmed = await confirmAlert({
-      title: "清空全部 TweetCraft 历史？",
-      message: "此操作无法撤销。Gemini API Key 不受影响。",
-      primaryAction: { title: "清空全部", style: Alert.ActionStyle.Destructive },
+      title: "Clear all TweetCraft history?",
+      message: "This cannot be undone. Your Gemini API key is not affected.",
+      primaryAction: { title: "Clear All", style: Alert.ActionStyle.Destructive },
     });
     if (!confirmed) return;
 
     await clearHistory();
     setEntries([]);
-    await showToast({ style: Toast.Style.Success, title: "历史已清空" });
+    await showToast({ style: Toast.Style.Success, title: "History cleared" });
   }
 
   return (
-    <List isLoading={isLoading} isShowingDetail searchBarPlaceholder="搜索中文原文或英文结果…">
+    <List
+      isLoading={isLoading}
+      isShowingDetail
+      searchBarPlaceholder="Search original text or English results…"
+    >
       <List.EmptyView
         icon={Icon.Document}
-        title="还没有本地草稿"
-        description={`使用 tp、tpx、tps 或 tpr 后，记录会保存在这里。${subtitle}`}
+        title="No Local Drafts Yet"
+        description={`Use tp, tpx, tps, or tpr and the draft will appear here. ${subtitle}.`}
       />
 
       {entries.map((entry) => {
@@ -193,33 +200,36 @@ export default function Command() {
             title={entry.sourceText.replace(/\s+/g, " ").trim()}
             subtitle={`${profile.label} · ${statusText(entry)}`}
             keywords={[entry.outputText ?? "", entry.errorMessage ?? "", profile.label]}
-            accessories={[{ text: `${entry.attempts} 次` }, { text: formatTime(entry.updatedAt) }]}
+            accessories={[
+              { text: `${entry.attempts} ${entry.attempts === 1 ? "attempt" : "attempts"}` },
+              { text: formatTime(entry.updatedAt) },
+            ]}
             detail={<List.Item.Detail markdown={detailMarkdown(entry)} />}
             actions={
               <ActionPanel>
                 {entry.status === "success" && entry.outputText ? (
                   <Action
-                    title="复制英文"
+                    title="Copy English"
                     icon={Icon.CopyClipboard}
-                    onAction={() => copyText(entry.outputText!, "英文已复制")}
+                    onAction={() => copyText(entry.outputText!, "English copied")}
                   />
                 ) : (
                   <Action
-                    title={isBusy ? "正在重新翻译…" : "重新翻译"}
+                    title={isBusy ? "Rewriting…" : "Retry Rewrite"}
                     icon={Icon.ArrowClockwise}
                     onAction={() => retry(entry)}
                   />
                 )}
 
                 <Action
-                  title="复制中文原文"
+                  title="Copy Original Chinese"
                   icon={Icon.Clipboard}
-                  onAction={() => copyText(entry.sourceText, "中文原文已复制")}
+                  onAction={() => copyText(entry.sourceText, "Original Chinese copied")}
                 />
 
                 {entry.status === "success" && (
                   <Action
-                    title={isBusy ? "正在重新翻译…" : "重新翻译并覆盖英文结果"}
+                    title={isBusy ? "Rewriting…" : "Rewrite Again and Replace Result"}
                     icon={Icon.ArrowClockwise}
                     onAction={() => retry(entry)}
                   />
@@ -227,21 +237,21 @@ export default function Command() {
 
                 {entry.outputText && entry.status !== "success" && (
                   <Action
-                    title="复制上次成功的英文"
+                    title="Copy Previous Successful Result"
                     icon={Icon.CopyClipboard}
-                    onAction={() => copyText(entry.outputText!, "上次成功的英文已复制")}
+                    onAction={() => copyText(entry.outputText!, "Previous English result copied")}
                   />
                 )}
 
                 <ActionPanel.Section>
                   <Action
-                    title="删除这条记录"
+                    title="Delete Draft"
                     icon={Icon.Trash}
                     style={Action.Style.Destructive}
                     onAction={() => remove(entry)}
                   />
                   <Action
-                    title="清空全部历史"
+                    title="Clear All History"
                     icon={Icon.Trash}
                     style={Action.Style.Destructive}
                     onAction={removeAll}
